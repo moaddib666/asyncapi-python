@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, get_type_hints
-
+from typing import Any, Callable, Dict, List, Optional, Type, get_type_hints, Union
 
 DEFAULT_CONTENT_TYPE = 'application/json'
 ASYNCAPI_VERSION = '2.0.0'
@@ -197,6 +196,11 @@ class Message:
 
 
 @dataclass
+class MessageOneOf:
+    one_of: Optional[List[Message]] = None
+
+
+@dataclass
 class OperationTrait:
     operation_id: Optional[str] = None
     summary: Optional[str] = None
@@ -215,7 +219,7 @@ class Operation:
     external_docs: Optional[ExternalDocumentation] = None
     bindings: Optional[Dict[ProtocolType, Any]] = None
     traits: Optional[List[OperationTrait]] = None
-    message: Optional[Message] = None
+    message: Optional[Union[Message, MessageOneOf]] = None
 
 
 @dataclass

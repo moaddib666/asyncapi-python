@@ -26,7 +26,7 @@ from asyncapi import Operation, Specification
 from asyncapi import docs_filters as jinja_filters
 from asyncapi.builder import build_spec_from_path
 from asyncapi.schema import type_as_jsonschema
-from asyncapi.specification_v2_0_0 import as_camel_case
+from asyncapi.specification_v2_0_0 import as_camel_case, MessageOneOf
 
 
 def main(
@@ -148,9 +148,29 @@ def set_operation_message(
     operation: Optional[Operation],
     json_spec_messages: Dict[str, str],
 ) -> None:
+
     operation_dict['message'].pop('contentType', None)
 
-    if (
+    # Only POC Do not use in production
+    # TODO cover with tests
+    # TODO optimize handling of one of (cleanup code from issues [dry::kis::solid])
+    if operation and operation_dict['message'].get("oneOf") and isinstance(operation.message, MessageOneOf):
+        for i in range(len(operation_dict['message']["oneOf"])):
+            o_msg = operation.message.one_of[i]
+
+            if o_msg.name in json_spec_messages:
+                operation_dict['message']["oneOf"][i] = {
+                    '$ref': (
+                        '#/components/messages/'
+                        f'{json_spec_messages[o_msg.name]}'
+                    )
+                }
+
+            elif o_msg and o_msg.payload:
+                operation_dict['message']["oneOf"][i]['payload'] = type_as_jsonschema(
+                    o_msg.payload
+                )
+    elif (
         operation
         and operation.message
         and operation.message.name
